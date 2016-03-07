@@ -1,11 +1,13 @@
 package com.app.compare3;
 
 import java.io.File;
-
-import lombok.extern.log4j.Log4j;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.app.compare.FileCompareStrategy;
 import com.app.compare.FileCompareStrategyByFileContent;
+
+import lombok.extern.log4j.Log4j;
 
 /**
  * <pre>
@@ -13,51 +15,86 @@ import com.app.compare.FileCompareStrategyByFileContent;
  * 对比DEV分支和RM分支的代码差异，对比结果：
  * 文件/目录  是否差异		差异值
  * XXX.JAVA  有               DEV有，RM无
+ * XXX.JAVA  有               DEV无，RM有
  * XXX.JAVA  有               DEV和RM内容不一致
  * 
  * </pre>
- * @author wangtlc 
+ * 
+ * @author wangtlc
  * @date 2016年3月7日 下午2:30:50
  *
- * 修改日期    修改人    修改目的
+ *       修改日期 修改人 修改目的
  *
  */
 @Log4j
 public class App {
 	static FileCompareStrategy fileCompareStrategy = new FileCompareStrategyByFileContent();
-	static File productDir = new File("E:/workspace-stq-all/chinamobile-jt/chinamobile-jt-dev/web-jt");
-	static File mavenDir = new File("E:/workspace-stq-all/chinamobile-jt/echd-chinamobile-jt-prod/web-jt");
+	static String devDirStr = "E:/workspace-stq-all/chinamobile-jt/chinamobile-jt-dev/web-jt/src/main/";
+	static String rmDirStr = "E:/workspace-stq-all/chinamobile-jt/echd-chinamobile-jt-prod/web-jt/src/main/";
+	static File devDir = new File(devDirStr);
+	static File rmDir = new File(rmDirStr);
+
+	static List<String> list1 = new ArrayList<String>();// dev1rm0
+	static List<String> list2 = new ArrayList<String>();// devrm_no
+	static List<String> list3 = new ArrayList<String>();// dev0rm1
 
 	public static void main(String[] args) throws Exception {
 		log.info("开始处理");
-		workInDir(productDir);//遍历生产的，看和MAVEN中是否一样
-		log.info("处理完毕");
+		workInDir1(devDir);// 解决场景：1、DEV有/RM无，2、DEV和RM不一致
+		workInDir2(rmDir);// 解决场景：RM有，DEV无
+		log.info("处理完毕，结果如下：");
+		for (String tmp : list1) {
+			log.info(pathDeal(tmp).replaceAll(devDirStr, "").replaceAll(rmDirStr, ""));	
+		}
+		for (String tmp : list2) {
+			log.info(pathDeal(tmp).replaceAll(devDirStr, "").replaceAll(rmDirStr, ""));	
+		}
+		for (String tmp : list3) {
+			log.info(pathDeal(tmp).replaceAll(devDirStr, "").replaceAll(rmDirStr, ""));	
+		}
 	}
 
-	public static void workInDir(File file) throws Exception {
-		File[] files = file.listFiles();
-		for (File productFile : files) {
-			if (productFile.isDirectory()) {// 遇到目录
-				workInDir(productFile);
-			} else {// 文件
-				if (!productFile.getName().endsWith(".jsp")) {
-//					log.info("该文件不是JSP,跳过:"+productFile.getName());
-					continue;
-				}
-				File mavenFile = chgMavenFile(productFile);
-//				log.info("处理:"+mavenFile);
-				if (!mavenFile.exists()) {
-					log.info("文件不存在："+productFile);
-				}else if (fileCompareStrategy.isEqualsTwoFile(mavenFile, productFile)) {// 如果在本地存在且相等则不处理，否则拷贝
-					// 不处理
-				} else {
-					log.info("发现文件不一致："+productFile);
+	public static void workInDir2(File rmFileP) throws Exception {
+		if (rmFileP.getAbsolutePath().contains("webapp")) {
+			log.warn("【跳过该文件：】" + rmFileP.getName());
+			return;
+		}
+		File[] rmFiles = rmFileP.listFiles();
+		for (File rmFileTem : rmFiles) {
+			if (rmFileTem.isDirectory()) {
+				workInDir2(rmFileTem);
+			} else {
+				File rmFile = new File(devDirStr + pathDeal(rmFileTem.getAbsolutePath()).replace(rmDirStr, ""));
+				if (!rmFile.exists()) {
+					list3.add("dev-notexsit," + rmFileTem);
 				}
 			}
 		}
 	}
-	
-	private static File chgMavenFile(File productFile) {
-		return new File(mavenDir + "/" + productFile.getAbsolutePath().replace(productDir.getAbsolutePath(), ""));
+
+	public static void workInDir1(File devFileP) throws Exception {
+		if (devFileP.getAbsolutePath().contains("webapp")) {
+			log.warn("【跳过该文件：】" + devFileP.getName());
+			return;
+		}
+		File[] devFiles = devFileP.listFiles();
+		for (File devFile : devFiles) {
+			if (devFile.isDirectory()) {
+				workInDir1(devFile);
+			} else {
+				File rmFile = new File(rmDirStr + pathDeal(devFile.getAbsolutePath()).replace(devDirStr, ""));
+				if (!rmFile.exists()) {
+					list1.add("rm-notexsit," + devFile);
+				} else if (fileCompareStrategy.isEqualsTwoFile(rmFile, devFile)) {// 如果在本地存在且相等则不处理，否则拷贝
+				} else {
+					list2.add("dev_rm_notequal," + devFile);
+				}
+			}
+		}
 	}
+
+	private static String pathDeal(String absolutePath) {
+		return absolutePath.replace("\\", "/");
+	}
+
 }
