@@ -1,0 +1,5 @@
+#白名单
+chinapay.SecureLink
+chinapay.PrivateKey
+com.hisun.hctp.util.HiSignServer,java.net.*,com.hisun.hctp.util.*
+com.hisun.hctp.util.*

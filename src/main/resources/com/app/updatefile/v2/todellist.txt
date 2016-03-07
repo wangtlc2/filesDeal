@@ -1,0 +1,8 @@
+#待删除行列表
+tw_servinvoke_log.setQuery_type
+tw_servinvoke_log.setOrder_flag
+tw_servinvoke_log.setUuid
+tw_servinvoke_log.setOp_code
+tw_servinvoke_log.setId_no
+tw_servinvoke_log.setOrg_code
+tw_servinvoke_log.setLogin_accept
