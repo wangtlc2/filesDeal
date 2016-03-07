@@ -3,10 +3,12 @@ package com.app.compare;
 import java.io.File;
 import java.util.List;
 
-import lombok.extern.log4j.Log4j;
-
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
+
+import com.util.FileEncodeCheckUtil;
+
+import lombok.extern.log4j.Log4j;
 
 @Log4j
 public class FileCompareStrategyByFileContent implements FileCompareStrategy {
@@ -14,9 +16,11 @@ public class FileCompareStrategyByFileContent implements FileCompareStrategy {
 
 	@Override
 	public boolean isEqualsTwoFile(File file1, File file2) throws Exception {
-		log.debug("进行文件比较,源文件:" + file1 + "目标文件:" + file2);
-		List<String> fileContentsFile1 = FileUtils.readLines(file1);
-		List<String> fileContentsFile2 = FileUtils.readLines(file2);
+		if (!FileEncodeCheckUtil.get_charset(file1).equals(FileEncodeCheckUtil.get_charset(file2))) {
+			log.info("进行文件比较,源文件:" + file1 +"-->>"+FileEncodeCheckUtil.get_charset(file1)+ "目标文件:" + file2+"-->>"+FileEncodeCheckUtil.get_charset(file2));
+		}
+		List<String> fileContentsFile1 = FileUtils.readLines(file1,FileEncodeCheckUtil.get_charset(file1));
+		List<String> fileContentsFile2 = FileUtils.readLines(file2,FileEncodeCheckUtil.get_charset(file2));
 		if (fileContentsFile1.size() != fileContentsFile2.size()) {
 			// log.error("发现不一致：【大小不同】"+targetFile+","+sourceFile);
 			return false;
